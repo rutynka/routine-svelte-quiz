@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset='utf-8'>
+	<meta name='viewport' content='width=device-width,initial-scale=1'>
+
+	<title>Svelte app</title>
+
+	<link rel='icon' type='image/png' href='./favicon.png'>
+	<link rel='stylesheet' href='./global.css'>
+	<link rel='stylesheet' href='./build/bundle.css'>
+	<link rel='stylesheet' href='./assets/bb.css'>
+
+	<link rel="stylesheet" href="https://cdn.rutynka.io/css/rendered.css" />
+	<script defer src='./build/bundle.js'></script>
+</head>
+
+<body>
+<nav class="bread__wrapper--flex">
+	<div id="logo" class="header header__home header__home--padding">
+		<a href="https://public.local" aria-label="home">
+			<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 10.583 10.583"><g paint-order="markers stroke fill"><path fill="#2ccab0" d="M8.294.346v1.995h-4.79V.346zM1.192.332h1.995v3.06H1.192zM3.444 6.655V4.66h5.181v1.995z"/><path fill="#2ccab0" d="M3.454 6.667l1.41-1.411 3.664 3.663-1.411 1.411zM1.142 4.682h1.995v5.181H1.142zM7.596.84h1.995v5.181H7.596z"/><path fill="#dfeb05" d="M6.065 3.993h-.323v-.825h.323zM6.068 2.77v.344h-.496V2.77zM5.043 3.158h.323v.893h-.323z"/><path fill="#dfeb05" d="M5.041 3.16l.229.243-.593.631-.23-.243zM5.363 2.761v.344h-.839v-.344zM5.985 3.873v.344h-.839v-.344z"/></g></svg>
+		</a>
+	</div>
+	<div class="bread__box bread__box--prop bread__hover">
+
+		<strong class="bread__separator--prop">❯</strong>
+		<strong class="bread__separator--prop">SVELTE</strong>
+
+		<span class="bread__lvl--color">1</span>
+	</div>
+
+	<div class="breadcrumb__btn btn__flex--end">
+		<button  id="inverseButton" type="button" aria-label="Inverse" class="button__inverse btn__inverse--trans inverse__none__js button__inverse--color btn__action--prop btn__small--prop">
+			Inverse</button>
+		<button  id="selectButton" type="button" aria-label="Select" class="js--hidden_btn_select button__select button__select--color btn__action--prop">Select</button>
+		<button  id="run" type="button" aria-label="Start" class="js--hidden_btn_run button__run button__run--color btn__action--prop">
+			<svg class="icon icon-play"><use xlink:href="#icon-play"></use></svg>
+			<span id="runText">Start</span>
+		</button>
+		<a  id="forkSubmit" type="submit" aria-label="Edit" class="btn__fork--display button__fork--color button__fork--padding btn__fork--prop send-to-editors-btn">
+			<svg class="icon icon-fork"><use xlink:href="#icon-fork"></use></svg><span>Edit</span>
+		</a>
+	</div>
+	<div class="version">v0.1</div>
+</nav>
+<main>
+<!--	<div id="userContent" class="content body__wrapper"></div>-->
+</main>
+<svg style="width: 0; height: 0; display:none;" width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg"
+	 xmlns:xlink="http://www.w3.org/1999/xlink">
+	<defs>
+		<symbol id="icon-play"  viewBox="0 0 6.615 6.615">
+			<g>
+				<path d="M5.811 3.197L1.624.31a.145.145 0 00-.226.118v5.776a.144.144 0 00.226.118l4.187-2.887a.144.144 0 000-.238z"/>
+			</g>
+		</symbol>
+		<symbol id="icon-fork" viewBox="0 0 6.615 6.615">
+			<path d="M5.765.877a.81.81 0 10-1.62 0c0 .357.233.657.554.764.045 1.159-.545 1.286-1.349 1.455-.46.097-.982.209-1.363.562V1.637a.806.806 0 00-.27-1.57.806.806 0 00-.27 1.57v3.336a.807.807 0 00.27 1.57.807.807 0 00.277-1.567c.074-1.058.694-1.19 1.468-1.352.82-.173 1.827-.39 1.775-1.99a.807.807 0 00.528-.757zm-4.533 0a.486.486 0 11.972.001.486.486 0 01-.972 0zm.971 4.856a.486.486 0 11-.972 0 .486.486 0 01.972 0zm2.752-4.37a.486.486 0 110-.972.486.486 0 010 .972z"/>
+		</symbol>
+	</defs>
+</svg>
+</body>
+</html>
