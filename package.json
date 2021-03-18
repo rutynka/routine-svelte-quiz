@@ -1,7 +1,27 @@
 {
-  "name": "svelte-app",
-  "version": "1.0.0",
-  "private": true,
+  "name": "rutynka-svelte-app",
+  "version": "0.0.1",
+  "author": "ru7ynk4",
+  "description": "Rutynka quiz app with helpers",
+  "svelte": "src/main.js",
+  "module": "dist/index.mjs",
+  "main": "dist/index.js",
+  "unpkg": "dist/index.js",
+  "files": [
+    "public/build/index.js"
+  ],
+  "keywords": [
+    "rutynka",
+    "svelte",
+    "quiz",
+    "progress",
+    "calendar",
+    "local storage",
+    "bar",
+    "board",
+    "helper",
+    "heatmap"
+  ],
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
