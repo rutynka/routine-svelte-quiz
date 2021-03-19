@@ -1,6 +1,6 @@
 <h1 align="center">
     <a href="https://rutynka.io">
-	<img width="820" src="rutynka_quiz.gif" alt="screenshot">
+	<img width="820" src="rutynka_quiz_anime.gif" alt="screenshot">
 	</a>
 </h1>
 
