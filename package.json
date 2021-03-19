@@ -42,5 +42,12 @@
     "@rutynka/helper-progress": "github:rutynka/helper-progress-calendar",
     "eslint-plugin-svelte3": "^3.0.0",
     "sirv-cli": "^1.0.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rutynka/routine-svelte-quiz"
+  },
+  "homepage": "https://github.com/rutynka/routine-svelte-quiz",
+  "url": "https://rutynka.io",
+  "license": "MIT"
 }

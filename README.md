@@ -36,7 +36,7 @@ If you're using [Visual Studio Code](https://code.visualstudio.com/) we recommen
 ## Get more data from [Rutynka](https://rutynka.io)
 
 ![parrots](public/parrots.png "Parrots")
-![parrots](public/fish.png "Fish")
+![fish](public/fish.png "Fish")
 
 https://public.rutynka.io/beta-testers/silly_hodgkin/14-Rabbit_breeds_originating_in_the_United_States.html
 https://public.rutynka.io/beta-testers/silly_hodgkin/19-Dog_fighting_breeds.html
