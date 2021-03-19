@@ -1,6 +1,6 @@
 {
   "name": "rutynka-svelte-app",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "ru7ynk4",
   "description": "Rutynka quiz app with helpers",
   "svelte": "src/main.js",
