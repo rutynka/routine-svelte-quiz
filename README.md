@@ -1,8 +1,5 @@
-<h1 align="center">
-    <a href="https://rutynka.io">
-	<img width="820" src="rutynka_quiz_anime.gif" alt="screenshot">
-	</a>
-</h1>
+![example](rutynka_quiz_anime.gif "Example")
+
 
 # Rutynka svelte quiz
 
@@ -39,8 +36,8 @@ If you're using [Visual Studio Code](https://code.visualstudio.com/) we recommen
 
 # Get more data from [Rutynka](https://rutynka.io)
 
-<img width="820" src="public/parrots.png" alt="screenshot">
-<img width="820" src="public/fish.png" alt="screenshot">
+![parrots](public/parrots.png "Parrots")
+![parrots](public/fish.png "Fish")
 
 https://public.rutynka.io/beta-testers/silly_hodgkin/14-Rabbit_breeds_originating_in_the_United_States.html
 https://public.rutynka.io/beta-testers/silly_hodgkin/19-Dog_fighting_breeds.html
