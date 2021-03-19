@@ -3,6 +3,13 @@
   "version": "0.0.1",
   "author": "ru7ynk4",
   "description": "Rutynka quiz app with helpers",
+  "svelte": "src/main.js",
+  "module": "dist/index.mjs",
+  "main": "dist/index.js",
+  "unpkg": "dist/index.js",
+  "files": [
+    "public/build/index.js"
+  ],
   "keywords": [
     "rutynka",
     "svelte",

@@ -1,6 +1,6 @@
 <h1 align="center">
     <a href="https://rutynka.io">
-	<img width="820" src="public/rutynka_quiz.gif" alt="screenshot">
+	<img width="820" src="rutynka_quiz.gif" alt="screenshot">
 	</a>
 </h1>
 
@@ -8,9 +8,9 @@
 
 This is a svelte quiz type for [Rutynka](https://rutynka.io) apps.
 
-## Stand-alone live demo on [Vercel](https://vercel.com)
+## Stand-alone live demo on [surge](https://surge.sh)
 
-https://routine-svelte-quiz.vercel.app/ 
+http://routine-svete-quiz.surge.sh/
 
 ---
 
