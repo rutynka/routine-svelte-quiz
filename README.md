@@ -1,7 +1,6 @@
-![example](rutynka_quiz_anime.gif "Example")
-
-
 # Rutynka svelte quiz
+
+![example](rutynka_quiz_anime.gif "Example")
 
 This is a svelte quiz type for [Rutynka](https://rutynka.io) apps.
 
@@ -34,7 +33,7 @@ By default, the server will only respond to requests from localhost. To allow co
 
 If you're using [Visual Studio Code](https://code.visualstudio.com/) we recommend installing the official extension [Svelte for VS Code](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode). If you are using other editors you may need to install a plugin in order to get syntax highlighting and intellisense.
 
-# Get more data from [Rutynka](https://rutynka.io)
+## Get more data from [Rutynka](https://rutynka.io)
 
 ![parrots](public/parrots.png "Parrots")
 ![parrots](public/fish.png "Fish")
