@@ -37,6 +37,8 @@ If you're using [Visual Studio Code](https://code.visualstudio.com/) we recommen
 
 ![parrots](public/parrots.png "Parrots")
 ![fish](public/fish.png "Fish")
+![paintings](public/paintings.png "Paintings")
+![officers](public/officers.png "Officers")
 
 https://public.rutynka.io/beta-testers/silly_hodgkin/14-Rabbit_breeds_originating_in_the_United_States.html
 https://public.rutynka.io/beta-testers/silly_hodgkin/19-Dog_fighting_breeds.html

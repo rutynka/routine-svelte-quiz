@@ -104,9 +104,12 @@
 
 	onMount(async () => {
 		console.log('start plugin:', name)
-		fetch('/assets/jsonld/20-Fish_of_Australia.json')
+		// fetch('/assets/jsonld/20-Fish_of_Australia.json')
 		// fetch('/assets/jsonld/18-Parrot_stubs.json')
 		// fetch('/assets/jsonld/6-Mięśnie_człowieka.json')
+		// fetch('/assets/jsonld/303-Nato_Army_officers.json')
+		// fetch('/assets/jsonld/56-Muscles_of_the_upper_limb.json')
+		fetch('/assets/jsonld/142-Food_and_drink_paintings.json')
 				.then(r => r.json())
 				.then(data => {
 					allTheFish = data;
@@ -139,13 +142,17 @@
     	flex-wrap: wrap;
 	}
 	figure {
-		margin:5px
+		margin:5px;
+		display:table;
 	}
 	figure, img {
-		max-width: 110px;
+		max-width: 200px;
 	}
 	:global(figure.correct) {  display:none; }
-
+	figcaption {
+		display: table-caption;
+    	caption-side: bottom;
+	}
 	.wiki {
 		position:absolute;
 		right: 3px;
@@ -165,7 +172,7 @@
 	}
 	.js--correct, .js--hidden_answer { display:none; }
 	.desc {
-		font-size: 13px;
+		font-size: 14px;
 		display: block;
 		text-align: center;
 		position: relative;
