@@ -1,5 +1,5 @@
 
-(function(l, r) { if (l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (window.location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(window.document);
+(function(l, r) { if (!l || l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (self.location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(self.document);
 function noop() { }
 const identity = x => x;
 function add_location(element, file, line, column, char) {
@@ -21,6 +21,14 @@ function is_function(thing) {
 }
 function safe_not_equal(a, b) {
     return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+}
+let src_url_equal_anchor;
+function src_url_equal(element_src, url) {
+    if (!src_url_equal_anchor) {
+        src_url_equal_anchor = document.createElement('a');
+    }
+    src_url_equal_anchor.href = url;
+    return element_src === src_url_equal_anchor.href;
 }
 function is_empty(obj) {
     return Object.keys(obj).length === 0;
@@ -63,9 +71,25 @@ function loop(callback) {
         }
     };
 }
-
 function append(target, node) {
     target.appendChild(node);
+}
+function get_root_for_style(node) {
+    if (!node)
+        return document;
+    const root = node.getRootNode ? node.getRootNode() : node.ownerDocument;
+    if (root && root.host) {
+        return root;
+    }
+    return node.ownerDocument;
+}
+function append_empty_stylesheet(node) {
+    const style_element = element('style');
+    append_stylesheet(get_root_for_style(node), style_element);
+    return style_element.sheet;
+}
+function append_stylesheet(node, style) {
+    append(node.head || node, style);
 }
 function insert(target, node, anchor) {
     target.insertBefore(node, anchor || null);
@@ -103,7 +127,7 @@ function attr(node, attribute, value) {
 }
 function set_custom_element_data(node, prop, value) {
     if (prop in node) {
-        node[prop] = value;
+        node[prop] = typeof node[prop] === 'boolean' && value === '' ? true : value;
     }
     else {
         attr(node, prop, value);
@@ -112,13 +136,15 @@ function set_custom_element_data(node, prop, value) {
 function children(element) {
     return Array.from(element.childNodes);
 }
-function custom_event(type, detail) {
+function custom_event(type, detail, bubbles = false) {
     const e = document.createEvent('CustomEvent');
-    e.initCustomEvent(type, false, false, detail);
+    e.initCustomEvent(type, bubbles, false, detail);
     return e;
 }
 
-const active_docs = new Set();
+// we need to store the information for multiple documents because a Svelte application could also contain iframes
+// https://github.com/sveltejs/svelte/issues/3624
+const managed_styles = new Map();
 let active = 0;
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
 function hash(str) {
@@ -127,6 +153,11 @@ function hash(str) {
     while (i--)
         hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
     return hash >>> 0;
+}
+function create_style_information(doc, node) {
+    const info = { stylesheet: append_empty_stylesheet(node), rules: {} };
+    managed_styles.set(doc, info);
+    return info;
 }
 function create_rule(node, a, b, duration, delay, ease, fn, uid = 0) {
     const step = 16.666 / duration;
@@ -137,12 +168,10 @@ function create_rule(node, a, b, duration, delay, ease, fn, uid = 0) {
     }
     const rule = keyframes + `100% {${fn(b, 1 - b)}}\n}`;
     const name = `__svelte_${hash(rule)}_${uid}`;
-    const doc = node.ownerDocument;
-    active_docs.add(doc);
-    const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = doc.head.appendChild(element('style')).sheet);
-    const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
-    if (!current_rules[name]) {
-        current_rules[name] = true;
+    const doc = get_root_for_style(node);
+    const { stylesheet, rules } = managed_styles.get(doc) || create_style_information(doc, node);
+    if (!rules[name]) {
+        rules[name] = true;
         stylesheet.insertRule(`@keyframes ${name} ${rule}`, stylesheet.cssRules.length);
     }
     const animation = node.style.animation || '';
@@ -168,14 +197,14 @@ function clear_rules() {
     raf(() => {
         if (active)
             return;
-        active_docs.forEach(doc => {
-            const stylesheet = doc.__svelte_stylesheet;
+        managed_styles.forEach(info => {
+            const { stylesheet } = info;
             let i = stylesheet.cssRules.length;
             while (i--)
                 stylesheet.deleteRule(i);
-            doc.__svelte_rules = {};
+            info.rules = {};
         });
-        active_docs.clear();
+        managed_styles.clear();
     });
 }
 
@@ -210,22 +239,40 @@ function add_render_callback(fn) {
 function add_flush_callback(fn) {
     flush_callbacks.push(fn);
 }
-let flushing = false;
+// flush() calls callbacks in this order:
+// 1. All beforeUpdate callbacks, in order: parents before children
+// 2. All bind:this callbacks, in reverse order: children before parents.
+// 3. All afterUpdate callbacks, in order: parents before children. EXCEPT
+//    for afterUpdates called during the initial onMount, which are called in
+//    reverse order: children before parents.
+// Since callbacks might update component values, which could trigger another
+// call to flush(), the following steps guard against this:
+// 1. During beforeUpdate, any updated components will be added to the
+//    dirty_components array and will cause a reentrant call to flush(). Because
+//    the flush index is kept outside the function, the reentrant call will pick
+//    up where the earlier call left off and go through all dirty components. The
+//    current_component value is saved and restored so that the reentrant call will
+//    not interfere with the "parent" flush() call.
+// 2. bind:this callbacks cannot trigger new flush() calls.
+// 3. During afterUpdate, any updated components will NOT have their afterUpdate
+//    callback called a second time; the seen_callbacks set, outside the flush()
+//    function, guarantees this behavior.
 const seen_callbacks = new Set();
+let flushidx = 0; // Do *not* move this inside the flush() function
 function flush() {
-    if (flushing)
-        return;
-    flushing = true;
+    const saved_component = current_component;
     do {
         // first, call beforeUpdate functions
         // and update components
-        for (let i = 0; i < dirty_components.length; i += 1) {
-            const component = dirty_components[i];
+        while (flushidx < dirty_components.length) {
+            const component = dirty_components[flushidx];
+            flushidx++;
             set_current_component(component);
             update(component.$$);
         }
         set_current_component(null);
         dirty_components.length = 0;
+        flushidx = 0;
         while (binding_callbacks.length)
             binding_callbacks.pop()();
         // then, once components are updated, call
@@ -245,8 +292,8 @@ function flush() {
         flush_callbacks.pop()();
     }
     update_scheduled = false;
-    flushing = false;
     seen_callbacks.clear();
+    set_current_component(saved_component);
 }
 function update($$) {
     if ($$.fragment !== null) {
@@ -352,6 +399,7 @@ function create_in_transition(node, fn, params) {
         start() {
             if (started)
                 return;
+            started = true;
             delete_rule(node);
             if (is_function(config)) {
                 config = config();
@@ -428,7 +476,7 @@ function make_dirty(component, i) {
     }
     component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
 }
-function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
+function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
     const parent_component = current_component;
     set_current_component(component);
     const $$ = component.$$ = {
@@ -445,12 +493,14 @@ function init(component, options, instance, create_fragment, not_equal, props, d
         on_disconnect: [],
         before_update: [],
         after_update: [],
-        context: new Map(parent_component ? parent_component.$$.context : []),
+        context: new Map(options.context || (parent_component ? parent_component.$$.context : [])),
         // everything else
         callbacks: blank_object(),
         dirty,
-        skip_bound: false
+        skip_bound: false,
+        root: options.target || parent_component.$$.root
     };
+    append_styles && append_styles($$.root);
     let ready = false;
     $$.ctx = instance
         ? instance(component, options.props || {}, (i, ret, ...rest) => {
@@ -514,7 +564,7 @@ class SvelteComponent {
 }
 
 function dispatch_dev(type, detail) {
-    document.dispatchEvent(custom_event(type, Object.assign({ version: '3.35.0' }, detail)));
+    document.dispatchEvent(custom_event(type, Object.assign({ version: '3.46.2' }, detail), true));
 }
 function append_dev(target, node) {
     dispatch_dev('SvelteDOMInsert', { target, node });
@@ -591,7 +641,7 @@ class SvelteComponentDev extends SvelteComponent {
     $inject_state() { }
 }
 
-/* node_modules/@rutynka/helper-progress/src/Progress.svelte generated by Svelte v3.35.0 */
+/* node_modules/@rutynka/helper-progress/src/Progress.svelte generated by Svelte v3.46.2 */
 
 const { Object: Object_1, console: console_1$2 } = globals;
 const file$4 = "node_modules/@rutynka/helper-progress/src/Progress.svelte";
@@ -770,8 +820,8 @@ function create_each_block$1(ctx) {
 			attr_dev(div, "title", div_title_value = /*row*/ ctx[17].title);
 
 			attr_dev(div, "class", div_class_value = "" + ((/*row*/ ctx[17].search_date === /*css_today*/ ctx[2]
-			? "today "
-			: "") + "sq big sqc-" + /*row*/ ctx[17].val + " svelte-12xblv0"));
+			? 'today '
+			: '') + "sq big sqc-" + /*row*/ ctx[17].val + " svelte-12xblv0"));
 
 			add_location(div, file$4, 140, 4, 4183);
 		},
@@ -788,8 +838,8 @@ function create_each_block$1(ctx) {
 			}
 
 			if (dirty & /*calendar*/ 2 && div_class_value !== (div_class_value = "" + ((/*row*/ ctx[17].search_date === /*css_today*/ ctx[2]
-			? "today "
-			: "") + "sq big sqc-" + /*row*/ ctx[17].val + " svelte-12xblv0"))) {
+			? 'today '
+			: '') + "sq big sqc-" + /*row*/ ctx[17].val + " svelte-12xblv0"))) {
 				attr_dev(div, "class", div_class_value);
 			}
 		},
@@ -862,25 +912,25 @@ function create_fragment$4(ctx) {
 
 function send_progress(ev) {
 	const progress = {
-		"collectionName": ev.collectionName,
-		"type": "finish",
-		"point": 1,
-		"percent": 100,
-		"exerciseTime": typeof ev !== "undefined" && ev.t
+		'collectionName': ev.collectionName,
+		'type': 'finish',
+		'point': 1,
+		'percent': 100,
+		'exerciseTime': typeof ev !== 'undefined' && ev.t
 		? ev.t
 		: bb.get_timer(),
-		"correctHit": typeof ev !== "undefined" && ev.correct
+		'correctHit': typeof ev !== 'undefined' && ev.correct
 		? ev.correct
 		: bb.correct_list.length,
-		"wrongHit": typeof ev !== "undefined" && ev.wrong
+		'wrongHit': typeof ev !== 'undefined' && ev.wrong
 		? ev.wrong
 		: bb.correct_list.length
 	};
 
-	const request = new Request(window.allTheFish.api.progressURL, { method: "PUT" });
+	const request = new Request(window.allTheFish.api.progressURL, { method: 'PUT' });
 
 	fetch(request, {
-		credentials: "include",
+		credentials: 'include',
 		headers: {
 			"Content-Type": "application/json; charset=utf-8"
 		},
@@ -890,13 +940,13 @@ function send_progress(ev) {
 		return response.json();
 	});
 
-	console.log("fetch or localstorage");
+	console.log('fetch or localstorage');
 }
 
 function instance$4($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
-	validate_slots("Progress", slots, []);
-	let { LANG = "en" } = $$props;
+	validate_slots('Progress', slots, []);
+	let { LANG = 'en' } = $$props;
 	let { DAYS = 14 } = $$props;
 	let { show = false } = $$props;
 	let { DAYS_BEFORE = 13 } = $$props;
@@ -919,7 +969,7 @@ function instance$4($$self, $$props, $$invalidate) {
 		$$invalidate(0, show = true);
 	};
 
-	console.log("progress helper loaded v0.0.5");
+	console.log('progress helper loaded v0.0.5');
 
 	function set_default(ev) {
 		$$invalidate(3, localstorage_key = ev.collectionName
@@ -952,16 +1002,16 @@ function instance$4($$self, $$props, $$invalidate) {
 	}
 
 	function date_format(d) {
-		const ye = new Intl.DateTimeFormat(LANG, { year: "numeric" }).format(d);
-		const mo = new Intl.DateTimeFormat(LANG, { month: "short" }).format(d);
-		const da = new Intl.DateTimeFormat(LANG, { day: "2-digit" }).format(d);
+		const ye = new Intl.DateTimeFormat(LANG, { year: 'numeric' }).format(d);
+		const mo = new Intl.DateTimeFormat(LANG, { month: 'short' }).format(d);
+		const da = new Intl.DateTimeFormat(LANG, { day: '2-digit' }).format(d);
 		return `${da}-${mo}-${ye}`;
 	}
 
 	function search_date_format(d) {
-		const ye = new Intl.DateTimeFormat(LANG, { year: "numeric" }).format(d);
-		const mo = new Intl.DateTimeFormat(LANG, { month: "numeric" }).format(d);
-		const da = new Intl.DateTimeFormat(LANG, { day: "2-digit" }).format(d);
+		const ye = new Intl.DateTimeFormat(LANG, { year: 'numeric' }).format(d);
+		const mo = new Intl.DateTimeFormat(LANG, { month: 'numeric' }).format(d);
+		const da = new Intl.DateTimeFormat(LANG, { day: '2-digit' }).format(d);
 		return `${ye}-${mo}-${da}`;
 	}
 
@@ -969,12 +1019,12 @@ function instance$4($$self, $$props, $$invalidate) {
 		let eventByDates = {};
 
 		if (eventsData.length <= 0) {
-			console.log("event data not found or invalid localstorage key");
+			console.log('event data not found or invalid localstorage key');
 			return {};
 		}
 
 		for (let i = 0; i < eventsData.length; i++) {
-			let dateFromEvent = new Date(eventsData[i].dT.replace(" CET", ""));
+			let dateFromEvent = new Date(eventsData[i].dT.replace(' CET', ''));
 
 			if (isNaN(dateFromEvent.getDate())) {
 				continue;
@@ -990,7 +1040,7 @@ function instance$4($$self, $$props, $$invalidate) {
 				: eventByDates[dateSearchFormat] = 6;
 			}
 
-			console.log("dT:", dateSearchFormat);
+			console.log('dT:', dateSearchFormat);
 		}
 
 		console.log(eventByDates);
@@ -1023,18 +1073,18 @@ function instance$4($$self, $$props, $$invalidate) {
 		}
 	};
 
-	const writable_props = ["LANG", "DAYS", "show", "DAYS_BEFORE", "localstorage_key"];
+	const writable_props = ['LANG', 'DAYS', 'show', 'DAYS_BEFORE', 'localstorage_key'];
 
 	Object_1.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1$2.warn(`<Progress> was created with unknown prop '${key}'`);
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console_1$2.warn(`<Progress> was created with unknown prop '${key}'`);
 	});
 
 	$$self.$$set = $$props => {
-		if ("LANG" in $$props) $$invalidate(4, LANG = $$props.LANG);
-		if ("DAYS" in $$props) $$invalidate(5, DAYS = $$props.DAYS);
-		if ("show" in $$props) $$invalidate(0, show = $$props.show);
-		if ("DAYS_BEFORE" in $$props) $$invalidate(6, DAYS_BEFORE = $$props.DAYS_BEFORE);
-		if ("localstorage_key" in $$props) $$invalidate(3, localstorage_key = $$props.localstorage_key);
+		if ('LANG' in $$props) $$invalidate(4, LANG = $$props.LANG);
+		if ('DAYS' in $$props) $$invalidate(5, DAYS = $$props.DAYS);
+		if ('show' in $$props) $$invalidate(0, show = $$props.show);
+		if ('DAYS_BEFORE' in $$props) $$invalidate(6, DAYS_BEFORE = $$props.DAYS_BEFORE);
+		if ('localstorage_key' in $$props) $$invalidate(3, localstorage_key = $$props.localstorage_key);
 	};
 
 	$$self.$capture_state = () => ({
@@ -1059,15 +1109,15 @@ function instance$4($$self, $$props, $$invalidate) {
 	});
 
 	$$self.$inject_state = $$props => {
-		if ("LANG" in $$props) $$invalidate(4, LANG = $$props.LANG);
-		if ("DAYS" in $$props) $$invalidate(5, DAYS = $$props.DAYS);
-		if ("show" in $$props) $$invalidate(0, show = $$props.show);
-		if ("DAYS_BEFORE" in $$props) $$invalidate(6, DAYS_BEFORE = $$props.DAYS_BEFORE);
-		if ("localstorage_key" in $$props) $$invalidate(3, localstorage_key = $$props.localstorage_key);
-		if ("today" in $$props) today = $$props.today;
-		if ("css_today" in $$props) $$invalidate(2, css_today = $$props.css_today);
-		if ("calendar" in $$props) $$invalidate(1, calendar = $$props.calendar);
-		if ("get_storage" in $$props) get_storage = $$props.get_storage;
+		if ('LANG' in $$props) $$invalidate(4, LANG = $$props.LANG);
+		if ('DAYS' in $$props) $$invalidate(5, DAYS = $$props.DAYS);
+		if ('show' in $$props) $$invalidate(0, show = $$props.show);
+		if ('DAYS_BEFORE' in $$props) $$invalidate(6, DAYS_BEFORE = $$props.DAYS_BEFORE);
+		if ('localstorage_key' in $$props) $$invalidate(3, localstorage_key = $$props.localstorage_key);
+		if ('today' in $$props) today = $$props.today;
+		if ('css_today' in $$props) $$invalidate(2, css_today = $$props.css_today);
+		if ('calendar' in $$props) $$invalidate(1, calendar = $$props.calendar);
+		if ('get_storage' in $$props) get_storage = $$props.get_storage;
 	};
 
 	if ($$props && "$$inject" in $$props) {
@@ -1112,7 +1162,7 @@ class Progress extends SvelteComponentDev {
 	}
 
 	set LANG(LANG) {
-		this.$set({ LANG });
+		this.$$set({ LANG });
 		flush();
 	}
 
@@ -1121,7 +1171,7 @@ class Progress extends SvelteComponentDev {
 	}
 
 	set DAYS(DAYS) {
-		this.$set({ DAYS });
+		this.$$set({ DAYS });
 		flush();
 	}
 
@@ -1130,7 +1180,7 @@ class Progress extends SvelteComponentDev {
 	}
 
 	set show(show) {
-		this.$set({ show });
+		this.$$set({ show });
 		flush();
 	}
 
@@ -1139,7 +1189,7 @@ class Progress extends SvelteComponentDev {
 	}
 
 	set DAYS_BEFORE(DAYS_BEFORE) {
-		this.$set({ DAYS_BEFORE });
+		this.$$set({ DAYS_BEFORE });
 		flush();
 	}
 
@@ -1148,7 +1198,7 @@ class Progress extends SvelteComponentDev {
 	}
 
 	set localstorage_key(localstorage_key) {
-		this.$set({ localstorage_key });
+		this.$$set({ localstorage_key });
 		flush();
 	}
 
@@ -1181,7 +1231,7 @@ function fly(node, { delay = 0, duration = 400, easing = cubicOut, x = 0, y = 0,
     };
 }
 
-/* node_modules/@rutynka/helper-bar-board/src/Board.svelte generated by Svelte v3.35.0 */
+/* node_modules/@rutynka/helper-bar-board/src/Board.svelte generated by Svelte v3.46.2 */
 const file$3 = "node_modules/@rutynka/helper-bar-board/src/Board.svelte";
 
 // (22:0) {#if visible}
@@ -1288,24 +1338,24 @@ function create_fragment$3(ctx) {
 
 function instance$3($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
-	validate_slots("Board", slots, []);
-	let { question = "" } = $$props;
+	validate_slots('Board', slots, []);
+	let { question = '' } = $$props;
 	let visible = false;
-	const writable_props = ["question"];
+	const writable_props = ['question'];
 
 	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Board> was created with unknown prop '${key}'`);
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Board> was created with unknown prop '${key}'`);
 	});
 
 	$$self.$$set = $$props => {
-		if ("question" in $$props) $$invalidate(0, question = $$props.question);
+		if ('question' in $$props) $$invalidate(0, question = $$props.question);
 	};
 
 	$$self.$capture_state = () => ({ fly, question, visible });
 
 	$$self.$inject_state = $$props => {
-		if ("question" in $$props) $$invalidate(0, question = $$props.question);
-		if ("visible" in $$props) $$invalidate(1, visible = $$props.visible);
+		if ('question' in $$props) $$invalidate(0, question = $$props.question);
+		if ('visible' in $$props) $$invalidate(1, visible = $$props.visible);
 	};
 
 	if ($$props && "$$inject" in $$props) {
@@ -1357,7 +1407,7 @@ class Board extends SvelteComponentDev {
 	}
 }
 
-/* node_modules/@rutynka/helper-bar-board/src/Timer.svelte generated by Svelte v3.35.0 */
+/* node_modules/@rutynka/helper-bar-board/src/Timer.svelte generated by Svelte v3.46.2 */
 
 const file$2 = "node_modules/@rutynka/helper-bar-board/src/Timer.svelte";
 
@@ -1458,7 +1508,7 @@ function create_fragment$2(ctx) {
 
 function instance$2($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
-	validate_slots("Timer", slots, []);
+	validate_slots('Timer', slots, []);
 	let { start_timer } = $$props;
 	let { timer = 0 } = $$props;
 	let interval = {};
@@ -1479,15 +1529,15 @@ function instance$2($$self, $$props, $$invalidate) {
 		);
 	}
 
-	const writable_props = ["start_timer", "timer"];
+	const writable_props = ['start_timer', 'timer'];
 
 	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Timer> was created with unknown prop '${key}'`);
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Timer> was created with unknown prop '${key}'`);
 	});
 
 	$$self.$$set = $$props => {
-		if ("start_timer" in $$props) $$invalidate(1, start_timer = $$props.start_timer);
-		if ("timer" in $$props) $$invalidate(0, timer = $$props.timer);
+		if ('start_timer' in $$props) $$invalidate(1, start_timer = $$props.start_timer);
+		if ('timer' in $$props) $$invalidate(0, timer = $$props.timer);
 	};
 
 	$$self.$capture_state = () => ({
@@ -1499,9 +1549,9 @@ function instance$2($$self, $$props, $$invalidate) {
 	});
 
 	$$self.$inject_state = $$props => {
-		if ("start_timer" in $$props) $$invalidate(1, start_timer = $$props.start_timer);
-		if ("timer" in $$props) $$invalidate(0, timer = $$props.timer);
-		if ("interval" in $$props) interval = $$props.interval;
+		if ('start_timer' in $$props) $$invalidate(1, start_timer = $$props.start_timer);
+		if ('timer' in $$props) $$invalidate(0, timer = $$props.timer);
+		if ('interval' in $$props) interval = $$props.interval;
 	};
 
 	if ($$props && "$$inject" in $$props) {
@@ -1532,7 +1582,7 @@ class Timer extends SvelteComponentDev {
 		const { ctx } = this.$$;
 		const props = options.props || {};
 
-		if (/*start_timer*/ ctx[1] === undefined && !("start_timer" in props)) {
+		if (/*start_timer*/ ctx[1] === undefined && !('start_timer' in props)) {
 			console.warn("<Timer> was created without expected prop 'start_timer'");
 		}
 	}
@@ -1554,7 +1604,7 @@ class Timer extends SvelteComponentDev {
 	}
 }
 
-/* node_modules/@rutynka/helper-bar-board/src/Bar.svelte generated by Svelte v3.35.0 */
+/* node_modules/@rutynka/helper-bar-board/src/Bar.svelte generated by Svelte v3.46.2 */
 
 const { console: console_1$1 } = globals;
 const file$1 = "node_modules/@rutynka/helper-bar-board/src/Bar.svelte";
@@ -1594,7 +1644,7 @@ function create_if_block(ctx) {
 	}
 
 	timer = new Timer({ props: timer_props, $$inline: true });
-	binding_callbacks.push(() => bind(timer, "start_timer", timer_start_timer_binding));
+	binding_callbacks.push(() => bind(timer, 'start_timer', timer_start_timer_binding));
 
 	const block = {
 		c: function create() {
@@ -1615,7 +1665,7 @@ function create_if_block(ctx) {
 			attr_dev(span0, "class", "svelte-efik5t");
 			add_location(span0, file$1, 47, 4, 1044);
 			attr_dev(span1, "id", "wrongCounter");
-			attr_dev(span1, "class", span1_class_value = "" + (null_to_empty(/*wrong*/ ctx[3] ? "" : "visibility") + " svelte-efik5t"));
+			attr_dev(span1, "class", span1_class_value = "" + (null_to_empty(/*wrong*/ ctx[3] ? '' : 'visibility') + " svelte-efik5t"));
 			add_location(span1, file$1, 48, 4, 1092);
 			attr_dev(div0, "id", "boardCounters");
 			attr_dev(div0, "class", "score score--absolute svelte-efik5t");
@@ -1648,7 +1698,7 @@ function create_if_block(ctx) {
 			if (!current || dirty & /*correct*/ 4) set_data_dev(t0, /*correct*/ ctx[2]);
 			if (!current || dirty & /*wrong*/ 8) set_data_dev(t2, /*wrong*/ ctx[3]);
 
-			if (!current || dirty & /*wrong*/ 8 && span1_class_value !== (span1_class_value = "" + (null_to_empty(/*wrong*/ ctx[3] ? "" : "visibility") + " svelte-efik5t"))) {
+			if (!current || dirty & /*wrong*/ 8 && span1_class_value !== (span1_class_value = "" + (null_to_empty(/*wrong*/ ctx[3] ? '' : 'visibility') + " svelte-efik5t"))) {
 				attr_dev(span1, "class", span1_class_value);
 			}
 
@@ -1766,8 +1816,8 @@ function create_fragment$1(ctx) {
 
 function instance$1($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
-	validate_slots("Bar", slots, []);
-	let { question = "" } = $$props;
+	validate_slots('Bar', slots, []);
+	let { question = '' } = $$props;
 	let { reset = false } = $$props;
 	let { set_timer = false } = $$props;
 	let { wrong_list = [] } = $$props;
@@ -1786,15 +1836,15 @@ function instance$1($$self, $$props, $$invalidate) {
 	};
 
 	const get_timer = function () {
-		let t = document.getElementById("boardTimer");
-		return t ? t.getAttribute("data-timer") : 0;
+		let t = document.getElementById('boardTimer');
+		return t ? t.getAttribute('data-timer') : 0;
 	};
 
-	console.log("bar board loaded v 0.0.3");
-	const writable_props = ["question", "reset", "set_timer", "wrong_list", "correct_list"];
+	console.log('bar board loaded v 0.0.3');
+	const writable_props = ['question', 'reset', 'set_timer', 'wrong_list', 'correct_list'];
 
 	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1$1.warn(`<Bar> was created with unknown prop '${key}'`);
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console_1$1.warn(`<Bar> was created with unknown prop '${key}'`);
 	});
 
 	function timer_start_timer_binding(value) {
@@ -1803,11 +1853,11 @@ function instance$1($$self, $$props, $$invalidate) {
 	}
 
 	$$self.$$set = $$props => {
-		if ("question" in $$props) $$invalidate(0, question = $$props.question);
-		if ("reset" in $$props) $$invalidate(4, reset = $$props.reset);
-		if ("set_timer" in $$props) $$invalidate(1, set_timer = $$props.set_timer);
-		if ("wrong_list" in $$props) $$invalidate(5, wrong_list = $$props.wrong_list);
-		if ("correct_list" in $$props) $$invalidate(6, correct_list = $$props.correct_list);
+		if ('question' in $$props) $$invalidate(0, question = $$props.question);
+		if ('reset' in $$props) $$invalidate(4, reset = $$props.reset);
+		if ('set_timer' in $$props) $$invalidate(1, set_timer = $$props.set_timer);
+		if ('wrong_list' in $$props) $$invalidate(5, wrong_list = $$props.wrong_list);
+		if ('correct_list' in $$props) $$invalidate(6, correct_list = $$props.correct_list);
 	};
 
 	$$self.$capture_state = () => ({
@@ -1826,13 +1876,13 @@ function instance$1($$self, $$props, $$invalidate) {
 	});
 
 	$$self.$inject_state = $$props => {
-		if ("question" in $$props) $$invalidate(0, question = $$props.question);
-		if ("reset" in $$props) $$invalidate(4, reset = $$props.reset);
-		if ("set_timer" in $$props) $$invalidate(1, set_timer = $$props.set_timer);
-		if ("wrong_list" in $$props) $$invalidate(5, wrong_list = $$props.wrong_list);
-		if ("correct_list" in $$props) $$invalidate(6, correct_list = $$props.correct_list);
-		if ("correct" in $$props) $$invalidate(2, correct = $$props.correct);
-		if ("wrong" in $$props) $$invalidate(3, wrong = $$props.wrong);
+		if ('question' in $$props) $$invalidate(0, question = $$props.question);
+		if ('reset' in $$props) $$invalidate(4, reset = $$props.reset);
+		if ('set_timer' in $$props) $$invalidate(1, set_timer = $$props.set_timer);
+		if ('wrong_list' in $$props) $$invalidate(5, wrong_list = $$props.wrong_list);
+		if ('correct_list' in $$props) $$invalidate(6, correct_list = $$props.correct_list);
+		if ('correct' in $$props) $$invalidate(2, correct = $$props.correct);
+		if ('wrong' in $$props) $$invalidate(3, wrong = $$props.wrong);
 	};
 
 	if ($$props && "$$inject" in $$props) {
@@ -1842,12 +1892,12 @@ function instance$1($$self, $$props, $$invalidate) {
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*reset*/ 16) {
 			if (reset === true) {
-				console.log("reset");
+				console.log('reset');
 				$$invalidate(2, correct = 0);
 				$$invalidate(3, wrong = 0);
 				$$invalidate(6, correct_list = []);
 				$$invalidate(5, wrong_list = []);
-				$$invalidate(0, question = " ");
+				$$invalidate(0, question = ' ');
 				$$invalidate(1, set_timer = false);
 				$$invalidate(4, reset = false);
 			}
@@ -1903,7 +1953,7 @@ class Bar extends SvelteComponentDev {
 	}
 
 	set question(question) {
-		this.$set({ question });
+		this.$$set({ question });
 		flush();
 	}
 
@@ -1912,7 +1962,7 @@ class Bar extends SvelteComponentDev {
 	}
 
 	set reset(reset) {
-		this.$set({ reset });
+		this.$$set({ reset });
 		flush();
 	}
 
@@ -1921,7 +1971,7 @@ class Bar extends SvelteComponentDev {
 	}
 
 	set set_timer(set_timer) {
-		this.$set({ set_timer });
+		this.$$set({ set_timer });
 		flush();
 	}
 
@@ -1930,7 +1980,7 @@ class Bar extends SvelteComponentDev {
 	}
 
 	set wrong_list(wrong_list) {
-		this.$set({ wrong_list });
+		this.$$set({ wrong_list });
 		flush();
 	}
 
@@ -1939,7 +1989,7 @@ class Bar extends SvelteComponentDev {
 	}
 
 	set correct_list(correct_list) {
-		this.$set({ correct_list });
+		this.$$set({ correct_list });
 		flush();
 	}
 
@@ -1968,7 +2018,7 @@ class Bar extends SvelteComponentDev {
 	}
 }
 
-/* src/App.svelte generated by Svelte v3.35.0 */
+/* src/App.svelte generated by Svelte v3.46.2 */
 
 const { console: console_1 } = globals;
 const file = "src/App.svelte";
@@ -2011,21 +2061,21 @@ function create_each_block(ctx) {
 			t4 = space();
 			attr_dev(img, "loading", "lazy");
 			attr_dev(img, "width", "200");
-			attr_dev(img, "class", "image svelte-1tjmkw");
-			if (img.src !== (img_src_value = /*row*/ ctx[18].item.image.thumbnail.contentUrl)) attr_dev(img, "src", img_src_value);
+			attr_dev(img, "class", "image svelte-3sv4rp");
+			if (!src_url_equal(img.src, img_src_value = /*row*/ ctx[18].item.image.thumbnail.contentUrl)) attr_dev(img, "src", img_src_value);
 			attr_dev(img, "data-answer", img_data_answer_value = /*row*/ ctx[18].item.name);
 			attr_dev(img, "alt", img_alt_value = /*row*/ ctx[18].item.name);
-			add_location(img, file, 128, 4, 3576);
-			attr_dev(a, "class", "wiki svelte-1tjmkw");
+			add_location(img, file, 128, 4, 3560);
+			attr_dev(a, "class", "wiki svelte-3sv4rp");
 			attr_dev(a, "rel", "noreferrer nofollow");
 			attr_dev(a, "target", "_blank");
 			attr_dev(a, "href", a_href_value = /*row*/ ctx[18].item.url);
-			add_location(a, file, 129, 4, 3729);
+			add_location(a, file, 129, 4, 3713);
 			attr_dev(figcaption, "data-search", "");
-			attr_dev(figcaption, "class", "desc svelte-1tjmkw");
-			add_location(figcaption, file, 130, 4, 3821);
-			attr_dev(figure, "class", "" + (null_to_empty(/*current*/ ctx[3] === "correct" ? "js--correct" : "") + " svelte-1tjmkw"));
-			add_location(figure, file, 127, 3, 3487);
+			attr_dev(figcaption, "class", "desc svelte-3sv4rp");
+			add_location(figcaption, file, 130, 4, 3805);
+			attr_dev(figure, "class", "" + (null_to_empty(/*current*/ ctx[3] === 'correct' ? 'js--correct' : '') + " svelte-3sv4rp"));
+			add_location(figure, file, 127, 3, 3471);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, figure, anchor);
@@ -2044,7 +2094,7 @@ function create_each_block(ctx) {
 			}
 		},
 		p: function update(ctx, dirty) {
-			if (dirty & /*allTheFish*/ 1 && img.src !== (img_src_value = /*row*/ ctx[18].item.image.thumbnail.contentUrl)) {
+			if (dirty & /*allTheFish*/ 1 && !src_url_equal(img.src, img_src_value = /*row*/ ctx[18].item.image.thumbnail.contentUrl)) {
 				attr_dev(img, "src", img_src_value);
 			}
 
@@ -2114,8 +2164,8 @@ function create_fragment(ctx) {
 
 			t1 = space();
 			create_component(progress.$$.fragment);
-			attr_dev(div, "class", "content svelte-1tjmkw");
-			add_location(div, file, 125, 1, 3418);
+			attr_dev(div, "class", "content svelte-3sv4rp");
+			add_location(div, file, 125, 1, 3402);
 		},
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -2212,36 +2262,36 @@ function shuffle(a) {
 
 function instance($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
-	validate_slots("App", slots, []);
+	validate_slots('App', slots, []);
 	let allTheFish = { itemListElement: [] };
 	let { name } = $$props;
 	let quiz_data = [];
 	let cycle = 0;
 	let correct = 0;
 	let wrong = 0;
-	let current = "";
+	let current = '';
 	let interval = {};
-	let parent_node_name = "figure";
+	let parent_node_name = 'figure';
 	let prgs;
 	let bb;
 
 	function handleClick(ev) {
-		let answer = ev.target.getAttribute("data-answer");
+		let answer = ev.target.getAttribute('data-answer');
 		console.log("clicked " + answer);
 
 		if (answer === bb.question) {
-			ev.target.parentNode.classList.add("correct");
+			ev.target.parentNode.classList.add('correct');
 			correct++;
 			bb.set_correct(answer);
 			quiz_data.splice(cycle - 1, 1);
 			startTimerQuestions();
 		} else {
 			bb.set_wrong(bb.question, answer);
-			ev.target.closest(parent_node_name).classList.add("js--wrong_answer");
+			ev.target.closest(parent_node_name).classList.add('js--wrong_answer');
 
 			setTimeout(
 				() => {
-					ev.target.closest(parent_node_name).classList.remove("js--wrong_answer");
+					ev.target.closest(parent_node_name).classList.remove('js--wrong_answer');
 				},
 				HIGHTLIHT_WRONG
 			);
@@ -2250,7 +2300,7 @@ function instance($$self, $$props, $$invalidate) {
 		}
 
 		if (correct === allTheFish.itemListElement.length) {
-			console.log("correct:", correct);
+			console.log('correct:', correct);
 			stopQuestionsAndWin();
 			$$invalidate(2, bb.set_timer = false, bb);
 		}
@@ -2262,7 +2312,7 @@ function instance($$self, $$props, $$invalidate) {
 		if (quiz_data.length <= cycle) {
 			cycle = 0;
 			quiz_data = shuffle(quiz_data);
-			console.log(quiz_data.length, "reset");
+			console.log(quiz_data.length, 'reset');
 		}
 
 		if (quiz_data.length) {
@@ -2273,14 +2323,14 @@ function instance($$self, $$props, $$invalidate) {
 	}
 
 	function stopQuestionsAndWin() {
-		console.log("Win");
+		console.log('Win');
 		clearInterval(interval);
 		prgs.store_progress({ collectionName: allTheFish.name });
 
 		//bb_helper.progress_request(data);
-		$$invalidate(2, bb.question = "Excellent !", bb);
+		$$invalidate(2, bb.question = 'Excellent !', bb);
 
-		document.body.classList.add("bg-correct");
+		document.body.classList.add('bg-correct');
 	}
 
 	function startTimerQuestions() {
@@ -2291,68 +2341,68 @@ function instance($$self, $$props, $$invalidate) {
 	}
 
 	function start() {
-		document.getElementById("run").classList.remove("js--hidden_btn_run");
+		document.getElementById('run').classList.remove('js--hidden_btn_run');
 
-		document.getElementById("run").addEventListener("click", () => {
-			console.log("start pressed");
+		document.getElementById('run').addEventListener('click', () => {
+			console.log('start pressed');
 			cycle = 0;
 			correct = 0;
 			wrong = 0;
 			$$invalidate(2, bb.reset = true, bb);
 			$$invalidate(1, prgs.show = false, prgs);
-			document.body.classList.remove("bg-correct");
+			document.body.classList.remove('bg-correct');
 			quiz_data = shuffle(allTheFish.itemListElement.slice());
 
 			// let $img = document.getElementsByClassName('image');
-			let img = [...document.querySelectorAll("[data-search]")];
+			let img = [...document.querySelectorAll('[data-search]')];
 
-			img.map(el => el.classList.toggle("js--hidden_answer"));
+			img.map(el => el.classList.toggle('js--hidden_answer'));
 
 			// let $imgNames = [...document.querySelectorAll('[data-search]')];
-			[].forEach.call(img, el => el.parentNode.classList.remove("correct"));
+			[].forEach.call(img, el => el.parentNode.classList.remove('correct'));
 
 			startTimerQuestions();
 		});
 	}
 
 	onMount(async () => {
-		console.log("start plugin:", name);
+		console.log('start plugin:', name);
 
 		// fetch('/assets/jsonld/20-Fish_of_Australia.json')
 		// fetch('/assets/jsonld/18-Parrot_stubs.json')
-		// fetch('/assets/jsonld/6-Mięśnie_człowieka.json')
-		// fetch('/assets/jsonld/303-Nato_Army_officers.json')
+		fetch('/assets/jsonld/6-Mięśnie_człowieka.json').// fetch('/assets/jsonld/303-Nato_Army_officers.json')
 		// fetch('/assets/jsonld/56-Muscles_of_the_upper_limb.json')
-		fetch("/assets/jsonld/142-Food_and_drink_paintings.json").then(r => r.json()).then(data => {
+		// fetch('/assets/jsonld/142-Food_and_drink_paintings.json')
+		then(r => r.json()).then(data => {
 			$$invalidate(0, allTheFish = data);
 			quiz_data = shuffle(data.itemListElement.slice());
 		});
 
-		document.addEventListener("DOMContentLoaded", start);
+		document.addEventListener('DOMContentLoaded', start);
 	});
 
-	const writable_props = ["name"];
+	const writable_props = ['name'];
 
 	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1.warn(`<App> was created with unknown prop '${key}'`);
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console_1.warn(`<App> was created with unknown prop '${key}'`);
 	});
 
 	function bar_binding($$value) {
-		binding_callbacks[$$value ? "unshift" : "push"](() => {
+		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
 			bb = $$value;
 			$$invalidate(2, bb);
 		});
 	}
 
 	function progress_binding($$value) {
-		binding_callbacks[$$value ? "unshift" : "push"](() => {
+		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
 			prgs = $$value;
 			$$invalidate(1, prgs);
 		});
 	}
 
 	$$self.$$set = $$props => {
-		if ("name" in $$props) $$invalidate(5, name = $$props.name);
+		if ('name' in $$props) $$invalidate(5, name = $$props.name);
 	};
 
 	$$self.$capture_state = () => ({
@@ -2381,17 +2431,17 @@ function instance($$self, $$props, $$invalidate) {
 	});
 
 	$$self.$inject_state = $$props => {
-		if ("allTheFish" in $$props) $$invalidate(0, allTheFish = $$props.allTheFish);
-		if ("name" in $$props) $$invalidate(5, name = $$props.name);
-		if ("quiz_data" in $$props) quiz_data = $$props.quiz_data;
-		if ("cycle" in $$props) cycle = $$props.cycle;
-		if ("correct" in $$props) correct = $$props.correct;
-		if ("wrong" in $$props) wrong = $$props.wrong;
-		if ("current" in $$props) $$invalidate(3, current = $$props.current);
-		if ("interval" in $$props) interval = $$props.interval;
-		if ("parent_node_name" in $$props) parent_node_name = $$props.parent_node_name;
-		if ("prgs" in $$props) $$invalidate(1, prgs = $$props.prgs);
-		if ("bb" in $$props) $$invalidate(2, bb = $$props.bb);
+		if ('allTheFish' in $$props) $$invalidate(0, allTheFish = $$props.allTheFish);
+		if ('name' in $$props) $$invalidate(5, name = $$props.name);
+		if ('quiz_data' in $$props) quiz_data = $$props.quiz_data;
+		if ('cycle' in $$props) cycle = $$props.cycle;
+		if ('correct' in $$props) correct = $$props.correct;
+		if ('wrong' in $$props) wrong = $$props.wrong;
+		if ('current' in $$props) $$invalidate(3, current = $$props.current);
+		if ('interval' in $$props) interval = $$props.interval;
+		if ('parent_node_name' in $$props) parent_node_name = $$props.parent_node_name;
+		if ('prgs' in $$props) $$invalidate(1, prgs = $$props.prgs);
+		if ('bb' in $$props) $$invalidate(2, bb = $$props.bb);
 	};
 
 	if ($$props && "$$inject" in $$props) {
@@ -2433,7 +2483,7 @@ class App extends SvelteComponentDev {
 		const { ctx } = this.$$;
 		const props = options.props || {};
 
-		if (/*name*/ ctx[5] === undefined && !("name" in props)) {
+		if (/*name*/ ctx[5] === undefined && !('name' in props)) {
 			console_1.warn("<App> was created without expected prop 'name'");
 		}
 	}
@@ -2454,4 +2504,4 @@ const app = new App({
 	}
 });
 
-export default app;
+export { app as default };

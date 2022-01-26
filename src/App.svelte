@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import Progress from '@rutynka/helper-progress/src/Progress.svelte'
+	import { Progress } from '@rutynka/helper-progress'
 	import Bar from '@rutynka/helper-bar-board/src/Bar.svelte'
 
 	let allTheFish = {itemListElement:[]}
@@ -106,10 +106,10 @@
 		console.log('start plugin:', name)
 		// fetch('/assets/jsonld/20-Fish_of_Australia.json')
 		// fetch('/assets/jsonld/18-Parrot_stubs.json')
-		// fetch('/assets/jsonld/6-Mięśnie_człowieka.json')
+		fetch('/assets/jsonld/6-Mięśnie_człowieka.json')
 		// fetch('/assets/jsonld/303-Nato_Army_officers.json')
 		// fetch('/assets/jsonld/56-Muscles_of_the_upper_limb.json')
-		fetch('/assets/jsonld/142-Food_and_drink_paintings.json')
+		// fetch('/assets/jsonld/142-Food_and_drink_paintings.json')
 				.then(r => r.json())
 				.then(data => {
 					allTheFish = data;
@@ -167,10 +167,10 @@
 	}
 	img:hover {opacity:0.5;background-color:white; }
 
-	.desc.js--hidden_answer {
+	:global(.desc.js--hidden_answer) {
 		visibility:hidden;
 	}
-	.js--correct, .js--hidden_answer { display:none; }
+	:global(.js--correct, .js--hidden_answer) { display:none; }
 	.desc {
 		font-size: 14px;
 		display: block;
@@ -178,11 +178,5 @@
 		position: relative;
 		top: -5px;
 
-	}
-
-	@media only screen and (max-width: 480px) {
-		main {
-			max-width: none;
-		}
 	}
 </style>
