@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
-	import { Progress } from '@rutynka/helper-progress'
-	import Bar from '@rutynka/helper-bar-board/src/Bar.svelte'
+	import Progress from '@rutynka/helper-progress'
+	import Bar from '@rutynka/helper-bar-board'
 
 	let allTheFish = {itemListElement:[]}
 
@@ -69,7 +69,7 @@
 	function stopQuestionsAndWin () {
 		console.log('Win')
 		clearInterval(interval);
-		prgs.store_progress({collectionName:allTheFish.name})
+		prgs.store_progress({collectionName:allTheFish.name,exerciseTime:bb.get_timer()})
 		//bb_helper.progress_request(data);
 		bb.question = 'Excellent !'
 		document.body.classList.add('bg-correct')

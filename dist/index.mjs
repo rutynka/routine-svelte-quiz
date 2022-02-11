@@ -648,11 +648,11 @@ const file$4 = "node_modules/@rutynka/helper-progress/src/Progress.svelte";
 
 function get_each_context$1(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	child_ctx[17] = list[i];
+	child_ctx[20] = list[i];
 	return child_ctx;
 }
 
-// (138:2) {#if show}
+// (166:1) {#if show}
 function create_if_block$3(ctx) {
 	let div0;
 	let t0;
@@ -674,7 +674,7 @@ function create_if_block$3(ctx) {
 	let div7;
 	let t9;
 	let span1;
-	let each_value = /*calendar*/ ctx[1];
+	let each_value = /*calendar*/ ctx[2];
 	validate_each_argument(each_value);
 	let each_blocks = [];
 
@@ -712,28 +712,26 @@ function create_if_block$3(ctx) {
 			span1 = element("span");
 			span1.textContent = "More";
 			attr_dev(div0, "id", "cal");
-			attr_dev(div0, "class", "days svelte-12xblv0");
-			add_location(div0, file$4, 138, 3, 4122);
-			attr_dev(span0, "class", "svelte-12xblv0");
-			add_location(span0, file$4, 144, 4, 4373);
-			attr_dev(div1, "class", "sq tiny sqc-0 svelte-12xblv0");
-			add_location(div1, file$4, 145, 4, 4395);
-			attr_dev(div2, "class", "sq tiny sqc-1 svelte-12xblv0");
-			add_location(div2, file$4, 146, 4, 4433);
-			attr_dev(div3, "class", "sq tiny sqc-2 svelte-12xblv0");
-			add_location(div3, file$4, 147, 4, 4471);
-			attr_dev(div4, "class", "sq tiny sqc-3 svelte-12xblv0");
-			add_location(div4, file$4, 148, 4, 4509);
-			attr_dev(div5, "class", "sq tiny sqc-4 svelte-12xblv0");
-			add_location(div5, file$4, 149, 4, 4547);
-			attr_dev(div6, "class", "sq tiny sqc-5 svelte-12xblv0");
-			add_location(div6, file$4, 150, 4, 4585);
-			attr_dev(div7, "class", "sq tiny sqc-6 svelte-12xblv0");
-			add_location(div7, file$4, 151, 4, 4623);
-			attr_dev(span1, "class", "svelte-12xblv0");
-			add_location(span1, file$4, 152, 4, 4661);
-			attr_dev(div8, "class", "legend prgs svelte-12xblv0");
-			add_location(div8, file$4, 143, 3, 4343);
+			attr_dev(div0, "class", "days svelte-1ssaupw");
+			add_location(div0, file$4, 166, 2, 5035);
+			add_location(span0, file$4, 176, 3, 5361);
+			attr_dev(div1, "class", "sq tiny sqc-0 svelte-1ssaupw");
+			add_location(div1, file$4, 177, 3, 5382);
+			attr_dev(div2, "class", "sq tiny sqc-1 svelte-1ssaupw");
+			add_location(div2, file$4, 178, 3, 5419);
+			attr_dev(div3, "class", "sq tiny sqc-2 svelte-1ssaupw");
+			add_location(div3, file$4, 179, 3, 5456);
+			attr_dev(div4, "class", "sq tiny sqc-3 svelte-1ssaupw");
+			add_location(div4, file$4, 180, 3, 5493);
+			attr_dev(div5, "class", "sq tiny sqc-4 svelte-1ssaupw");
+			add_location(div5, file$4, 181, 3, 5530);
+			attr_dev(div6, "class", "sq tiny sqc-5 svelte-1ssaupw");
+			add_location(div6, file$4, 182, 3, 5567);
+			attr_dev(div7, "class", "sq tiny sqc-6 svelte-1ssaupw");
+			add_location(div7, file$4, 183, 3, 5604);
+			add_location(span1, file$4, 184, 3, 5641);
+			attr_dev(div8, "class", "legend prgs svelte-1ssaupw");
+			add_location(div8, file$4, 175, 2, 5332);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, div0, anchor);
@@ -763,8 +761,8 @@ function create_if_block$3(ctx) {
 			append_dev(div8, span1);
 		},
 		p: function update(ctx, dirty) {
-			if (dirty & /*calendar, css_today*/ 6) {
-				each_value = /*calendar*/ ctx[1];
+			if (dirty & /*calendar, css_today, show_time*/ 14) {
+				each_value = /*calendar*/ ctx[2];
 				validate_each_argument(each_value);
 				let i;
 
@@ -799,52 +797,108 @@ function create_if_block$3(ctx) {
 		block,
 		id: create_if_block$3.name,
 		type: "if",
-		source: "(138:2) {#if show}",
+		source: "(166:1) {#if show}",
 		ctx
 	});
 
 	return block;
 }
 
-// (140:4) {#each calendar as row }
+// (170:3) {#if row.eT && show_time }
+function create_if_block_1(ctx) {
+	let span;
+	let t_value = /*row*/ ctx[20].eT + "";
+	let t;
+
+	const block = {
+		c: function create() {
+			span = element("span");
+			t = text(t_value);
+			attr_dev(span, "class", "sec svelte-1ssaupw");
+			add_location(span, file$4, 170, 4, 5257);
+		},
+		m: function mount(target, anchor) {
+			insert_dev(target, span, anchor);
+			append_dev(span, t);
+		},
+		p: function update(ctx, dirty) {
+			if (dirty & /*calendar*/ 4 && t_value !== (t_value = /*row*/ ctx[20].eT + "")) set_data_dev(t, t_value);
+		},
+		d: function destroy(detaching) {
+			if (detaching) detach_dev(span);
+		}
+	};
+
+	dispatch_dev("SvelteRegisterBlock", {
+		block,
+		id: create_if_block_1.name,
+		type: "if",
+		source: "(170:3) {#if row.eT && show_time }",
+		ctx
+	});
+
+	return block;
+}
+
+// (168:3) {#each calendar as row }
 function create_each_block$1(ctx) {
 	let div;
+	let t;
 	let div_data_cal_value;
 	let div_title_value;
 	let div_class_value;
+	let if_block = /*row*/ ctx[20].eT && /*show_time*/ ctx[1] && create_if_block_1(ctx);
 
 	const block = {
 		c: function create() {
 			div = element("div");
-			attr_dev(div, "data-cal", div_data_cal_value = /*row*/ ctx[17].search_date);
-			attr_dev(div, "title", div_title_value = /*row*/ ctx[17].title);
+			if (if_block) if_block.c();
+			t = space();
+			attr_dev(div, "data-cal", div_data_cal_value = /*row*/ ctx[20].search_date);
+			attr_dev(div, "title", div_title_value = /*row*/ ctx[20].title);
 
-			attr_dev(div, "class", div_class_value = "" + ((/*row*/ ctx[17].search_date === /*css_today*/ ctx[2]
+			attr_dev(div, "class", div_class_value = "" + ((/*row*/ ctx[20].search_date === /*css_today*/ ctx[3]
 			? 'today '
-			: '') + "sq big sqc-" + /*row*/ ctx[17].val + " svelte-12xblv0"));
+			: '') + "sq big sqc-" + /*row*/ ctx[20].val + " svelte-1ssaupw"));
 
-			add_location(div, file$4, 140, 4, 4183);
+			add_location(div, file$4, 168, 3, 5094);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, div, anchor);
+			if (if_block) if_block.m(div, null);
+			append_dev(div, t);
 		},
 		p: function update(ctx, dirty) {
-			if (dirty & /*calendar*/ 2 && div_data_cal_value !== (div_data_cal_value = /*row*/ ctx[17].search_date)) {
+			if (/*row*/ ctx[20].eT && /*show_time*/ ctx[1]) {
+				if (if_block) {
+					if_block.p(ctx, dirty);
+				} else {
+					if_block = create_if_block_1(ctx);
+					if_block.c();
+					if_block.m(div, t);
+				}
+			} else if (if_block) {
+				if_block.d(1);
+				if_block = null;
+			}
+
+			if (dirty & /*calendar*/ 4 && div_data_cal_value !== (div_data_cal_value = /*row*/ ctx[20].search_date)) {
 				attr_dev(div, "data-cal", div_data_cal_value);
 			}
 
-			if (dirty & /*calendar*/ 2 && div_title_value !== (div_title_value = /*row*/ ctx[17].title)) {
+			if (dirty & /*calendar*/ 4 && div_title_value !== (div_title_value = /*row*/ ctx[20].title)) {
 				attr_dev(div, "title", div_title_value);
 			}
 
-			if (dirty & /*calendar*/ 2 && div_class_value !== (div_class_value = "" + ((/*row*/ ctx[17].search_date === /*css_today*/ ctx[2]
+			if (dirty & /*calendar*/ 4 && div_class_value !== (div_class_value = "" + ((/*row*/ ctx[20].search_date === /*css_today*/ ctx[3]
 			? 'today '
-			: '') + "sq big sqc-" + /*row*/ ctx[17].val + " svelte-12xblv0"))) {
+			: '') + "sq big sqc-" + /*row*/ ctx[20].val + " svelte-1ssaupw"))) {
 				attr_dev(div, "class", div_class_value);
 			}
 		},
 		d: function destroy(detaching) {
 			if (detaching) detach_dev(div);
+			if (if_block) if_block.d();
 		}
 	};
 
@@ -852,7 +906,7 @@ function create_each_block$1(ctx) {
 		block,
 		id: create_each_block$1.name,
 		type: "each",
-		source: "(140:4) {#each calendar as row }",
+		source: "(168:3) {#each calendar as row }",
 		ctx
 	});
 
@@ -867,8 +921,8 @@ function create_fragment$4(ctx) {
 		c: function create() {
 			prgs_calendar = element("prgs-calendar");
 			if (if_block) if_block.c();
-			set_custom_element_data(prgs_calendar, "class", "prgs svelte-12xblv0");
-			add_location(prgs_calendar, file$4, 136, 0, 4077);
+			set_custom_element_data(prgs_calendar, "class", "prgs svelte-1ssaupw");
+			add_location(prgs_calendar, file$4, 164, 0, 4992);
 		},
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -946,18 +1000,20 @@ function send_progress(ev) {
 function instance$4($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
 	validate_slots('Progress', slots, []);
-	let { LANG = 'en' } = $$props;
-	let { DAYS = 14 } = $$props;
+	let { lang = 'en' } = $$props;
 	let { show = false } = $$props;
-	let { DAYS_BEFORE = 13 } = $$props;
+	let { show_time = true } = $$props;
+	let { visible_days = 14 } = $$props;
+	let { days_before_today = 13 } = $$props;
 	let { localstorage_key = window.location.href } = $$props;
+	let eventsBestTime = {};
 	let today = new Date();
 	let css_today = search_date_format(today);
-	today.setDate(today.getDate() - DAYS_BEFORE);
+	today.setDate(today.getDate() - days_before_today);
 	let calendar = init_calendar_day_sequence();
 
 	const store_progress = function (ev) {
-		ev = ev || {};
+		ev = ev ?? {};
 		set_default(ev);
 
 		if (ev.store_db) {
@@ -965,14 +1021,15 @@ function instance$4($$self, $$props, $$invalidate) {
 		}
 
 		add_to_local_storage(ev);
-		update_calendar(packHitsInaDay(get_storage()));
+		merge_hit_days_with_calendar_view(pack_hits_in_a_day(get_storage()));
 		$$invalidate(0, show = true);
+		return true;
 	};
 
-	console.log('progress helper loaded v0.0.5');
+	console.log('progress helper loaded v0.1.1');
 
 	function set_default(ev) {
-		$$invalidate(3, localstorage_key = ev.collectionName
+		$$invalidate(4, localstorage_key = ev.collectionName
 		? ev.collectionName
 		: window.location.href);
 
@@ -988,11 +1045,12 @@ function instance$4($$self, $$props, $$invalidate) {
 	function init_calendar_day_sequence() {
 		let sequence = [];
 		let today = new Date();
-		today.setDate(today.getDate() - DAYS_BEFORE);
+		today.setDate(today.getDate() - days_before_today);
 
-		for (let i = 0; i < DAYS; i++) {
+		for (let i = 0; i < visible_days; i++) {
 			sequence.push({
 				val: 0,
+				sec: 0,
 				title: date_format(new Date(today.setDate(today.getDate() + 1))),
 				search_date: search_date_format(new Date(today.setDate(today.getDate())))
 			});
@@ -1002,20 +1060,20 @@ function instance$4($$self, $$props, $$invalidate) {
 	}
 
 	function date_format(d) {
-		const ye = new Intl.DateTimeFormat(LANG, { year: 'numeric' }).format(d);
-		const mo = new Intl.DateTimeFormat(LANG, { month: 'short' }).format(d);
-		const da = new Intl.DateTimeFormat(LANG, { day: '2-digit' }).format(d);
+		const ye = new Intl.DateTimeFormat(lang, { year: 'numeric' }).format(d);
+		const mo = new Intl.DateTimeFormat(lang, { month: 'short' }).format(d);
+		const da = new Intl.DateTimeFormat(lang, { day: '2-digit' }).format(d);
 		return `${da}-${mo}-${ye}`;
 	}
 
 	function search_date_format(d) {
-		const ye = new Intl.DateTimeFormat(LANG, { year: 'numeric' }).format(d);
-		const mo = new Intl.DateTimeFormat(LANG, { month: 'numeric' }).format(d);
-		const da = new Intl.DateTimeFormat(LANG, { day: '2-digit' }).format(d);
+		const ye = new Intl.DateTimeFormat(lang, { year: 'numeric' }).format(d);
+		const mo = new Intl.DateTimeFormat(lang, { month: 'numeric' }).format(d);
+		const da = new Intl.DateTimeFormat(lang, { day: '2-digit' }).format(d);
 		return `${ye}-${mo}-${da}`;
 	}
 
-	function packHitsInaDay(eventsData) {
+	function pack_hits_in_a_day(eventsData) {
 		let eventByDates = {};
 
 		if (eventsData.length <= 0) {
@@ -1031,28 +1089,54 @@ function instance$4($$self, $$props, $$invalidate) {
 			}
 
 			let dateSearchFormat = search_date_format(dateFromEvent);
+			let eT = get_best_time(eventsData[i], dateSearchFormat);
 
 			if (eventByDates[dateSearchFormat] === undefined) {
-				eventByDates[dateSearchFormat] = 1;
+				eventByDates[dateSearchFormat] = { hit: 1, eT };
 			} else {
-				eventByDates[dateSearchFormat] = eventByDates[dateSearchFormat] < 6
-				? eventByDates[dateSearchFormat] + 1
-				: eventByDates[dateSearchFormat] = 6;
-			}
+				eventByDates[dateSearchFormat]['hit'] = eventByDates[dateSearchFormat]['hit'] < 6
+				? eventByDates[dateSearchFormat]['hit'] + 1
+				: eventByDates[dateSearchFormat] = { hit: 7 };
 
-			console.log('dT:', dateSearchFormat);
-		}
+				eventByDates[dateSearchFormat]['eT'] = eT;
+			}
+		} // console.log('dT:', dateSearchFormat)
 
 		console.log(eventByDates);
 		return eventByDates;
 	}
 
-	function update_calendar(eventsByDate) {
+	function get_best_time(rawEventsData, dateKey) {
+		let bestTime = 0;
+		let exerciseTime = parseInt(rawEventsData['exerciseTime']);
+
+		if (exerciseTime && exerciseTime !== 0) {
+			if (eventsBestTime[dateKey]) {
+				bestTime = eventsBestTime[dateKey] > exerciseTime
+				? exerciseTime
+				: eventsBestTime[dateKey];
+			} else {
+				bestTime = exerciseTime;
+			}
+
+			eventsBestTime[dateKey] = bestTime;
+		} else {
+			if (eventsBestTime[dateKey]) {
+				bestTime = eventsBestTime[dateKey];
+			}
+		}
+
+		// console.log(bestTime)
+		return bestTime;
+	}
+
+	function merge_hit_days_with_calendar_view(eventsByDate) {
 		let dateEventsKey = Object.keys(eventsByDate);
 
 		for (let i = 0; i < calendar.length; i++) {
 			if (dateEventsKey.indexOf(calendar[i].search_date) !== -1) {
-				$$invalidate(1, calendar[i].val = eventsByDate[calendar[i].search_date], calendar);
+				$$invalidate(2, calendar[i].val = eventsByDate[calendar[i].search_date]['hit'], calendar);
+				$$invalidate(2, calendar[i].eT = eventsByDate[calendar[i].search_date]['eT'], calendar);
 			}
 		}
 	}
@@ -1073,26 +1157,36 @@ function instance$4($$self, $$props, $$invalidate) {
 		}
 	};
 
-	const writable_props = ['LANG', 'DAYS', 'show', 'DAYS_BEFORE', 'localstorage_key'];
+	const writable_props = [
+		'lang',
+		'show',
+		'show_time',
+		'visible_days',
+		'days_before_today',
+		'localstorage_key'
+	];
 
 	Object_1.keys($$props).forEach(key => {
 		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console_1$2.warn(`<Progress> was created with unknown prop '${key}'`);
 	});
 
 	$$self.$$set = $$props => {
-		if ('LANG' in $$props) $$invalidate(4, LANG = $$props.LANG);
-		if ('DAYS' in $$props) $$invalidate(5, DAYS = $$props.DAYS);
+		if ('lang' in $$props) $$invalidate(5, lang = $$props.lang);
 		if ('show' in $$props) $$invalidate(0, show = $$props.show);
-		if ('DAYS_BEFORE' in $$props) $$invalidate(6, DAYS_BEFORE = $$props.DAYS_BEFORE);
-		if ('localstorage_key' in $$props) $$invalidate(3, localstorage_key = $$props.localstorage_key);
+		if ('show_time' in $$props) $$invalidate(1, show_time = $$props.show_time);
+		if ('visible_days' in $$props) $$invalidate(6, visible_days = $$props.visible_days);
+		if ('days_before_today' in $$props) $$invalidate(7, days_before_today = $$props.days_before_today);
+		if ('localstorage_key' in $$props) $$invalidate(4, localstorage_key = $$props.localstorage_key);
 	};
 
 	$$self.$capture_state = () => ({
-		LANG,
-		DAYS,
+		lang,
 		show,
-		DAYS_BEFORE,
+		show_time,
+		visible_days,
+		days_before_today,
 		localstorage_key,
+		eventsBestTime,
 		today,
 		css_today,
 		calendar,
@@ -1102,21 +1196,24 @@ function instance$4($$self, $$props, $$invalidate) {
 		init_calendar_day_sequence,
 		date_format,
 		search_date_format,
-		packHitsInaDay,
-		update_calendar,
+		pack_hits_in_a_day,
+		get_best_time,
+		merge_hit_days_with_calendar_view,
 		get_storage,
 		add_to_local_storage
 	});
 
 	$$self.$inject_state = $$props => {
-		if ('LANG' in $$props) $$invalidate(4, LANG = $$props.LANG);
-		if ('DAYS' in $$props) $$invalidate(5, DAYS = $$props.DAYS);
+		if ('lang' in $$props) $$invalidate(5, lang = $$props.lang);
 		if ('show' in $$props) $$invalidate(0, show = $$props.show);
-		if ('DAYS_BEFORE' in $$props) $$invalidate(6, DAYS_BEFORE = $$props.DAYS_BEFORE);
-		if ('localstorage_key' in $$props) $$invalidate(3, localstorage_key = $$props.localstorage_key);
+		if ('show_time' in $$props) $$invalidate(1, show_time = $$props.show_time);
+		if ('visible_days' in $$props) $$invalidate(6, visible_days = $$props.visible_days);
+		if ('days_before_today' in $$props) $$invalidate(7, days_before_today = $$props.days_before_today);
+		if ('localstorage_key' in $$props) $$invalidate(4, localstorage_key = $$props.localstorage_key);
+		if ('eventsBestTime' in $$props) eventsBestTime = $$props.eventsBestTime;
 		if ('today' in $$props) today = $$props.today;
-		if ('css_today' in $$props) $$invalidate(2, css_today = $$props.css_today);
-		if ('calendar' in $$props) $$invalidate(1, calendar = $$props.calendar);
+		if ('css_today' in $$props) $$invalidate(3, css_today = $$props.css_today);
+		if ('calendar' in $$props) $$invalidate(2, calendar = $$props.calendar);
 		if ('get_storage' in $$props) get_storage = $$props.get_storage;
 	};
 
@@ -1126,12 +1223,13 @@ function instance$4($$self, $$props, $$invalidate) {
 
 	return [
 		show,
+		show_time,
 		calendar,
 		css_today,
 		localstorage_key,
-		LANG,
-		DAYS,
-		DAYS_BEFORE,
+		lang,
+		visible_days,
+		days_before_today,
 		store_progress
 	];
 }
@@ -1141,12 +1239,13 @@ class Progress extends SvelteComponentDev {
 		super(options);
 
 		init(this, options, instance$4, create_fragment$4, safe_not_equal, {
-			LANG: 4,
-			DAYS: 5,
+			lang: 5,
 			show: 0,
-			DAYS_BEFORE: 6,
-			localstorage_key: 3,
-			store_progress: 7
+			show_time: 1,
+			visible_days: 6,
+			days_before_today: 7,
+			localstorage_key: 4,
+			store_progress: 8
 		});
 
 		dispatch_dev("SvelteRegisterComponent", {
@@ -1157,21 +1256,12 @@ class Progress extends SvelteComponentDev {
 		});
 	}
 
-	get LANG() {
-		return this.$$.ctx[4];
-	}
-
-	set LANG(LANG) {
-		this.$$set({ LANG });
-		flush();
-	}
-
-	get DAYS() {
+	get lang() {
 		return this.$$.ctx[5];
 	}
 
-	set DAYS(DAYS) {
-		this.$$set({ DAYS });
+	set lang(lang) {
+		this.$$set({ lang });
 		flush();
 	}
 
@@ -1184,17 +1274,35 @@ class Progress extends SvelteComponentDev {
 		flush();
 	}
 
-	get DAYS_BEFORE() {
+	get show_time() {
+		return this.$$.ctx[1];
+	}
+
+	set show_time(show_time) {
+		this.$$set({ show_time });
+		flush();
+	}
+
+	get visible_days() {
 		return this.$$.ctx[6];
 	}
 
-	set DAYS_BEFORE(DAYS_BEFORE) {
-		this.$$set({ DAYS_BEFORE });
+	set visible_days(visible_days) {
+		this.$$set({ visible_days });
+		flush();
+	}
+
+	get days_before_today() {
+		return this.$$.ctx[7];
+	}
+
+	set days_before_today(days_before_today) {
+		this.$$set({ days_before_today });
 		flush();
 	}
 
 	get localstorage_key() {
-		return this.$$.ctx[3];
+		return this.$$.ctx[4];
 	}
 
 	set localstorage_key(localstorage_key) {
@@ -1203,7 +1311,7 @@ class Progress extends SvelteComponentDev {
 	}
 
 	get store_progress() {
-		return this.$$.ctx[7];
+		return this.$$.ctx[8];
 	}
 
 	set store_progress(value) {
@@ -1609,7 +1717,7 @@ class Timer extends SvelteComponentDev {
 const { console: console_1$1 } = globals;
 const file$1 = "node_modules/@rutynka/helper-bar-board/src/Bar.svelte";
 
-// (45:1) {#if question}
+// (49:1) {#if question}
 function create_if_block(ctx) {
 	let div2;
 	let div0;
@@ -1634,7 +1742,7 @@ function create_if_block(ctx) {
 		});
 
 	function timer_start_timer_binding(value) {
-		/*timer_start_timer_binding*/ ctx[10](value);
+		/*timer_start_timer_binding*/ ctx[11](value);
 	}
 
 	let timer_props = {};
@@ -1662,21 +1770,21 @@ function create_if_block(ctx) {
 			t5 = space();
 			div1 = element("div");
 			attr_dev(span0, "id", "correctCounter");
-			attr_dev(span0, "class", "svelte-efik5t");
-			add_location(span0, file$1, 47, 4, 1044);
+			attr_dev(span0, "class", "svelte-11k3j5w");
+			add_location(span0, file$1, 51, 4, 1173);
 			attr_dev(span1, "id", "wrongCounter");
-			attr_dev(span1, "class", span1_class_value = "" + (null_to_empty(/*wrong*/ ctx[3] ? '' : 'visibility') + " svelte-efik5t"));
-			add_location(span1, file$1, 48, 4, 1092);
+			attr_dev(span1, "class", span1_class_value = "" + (null_to_empty(/*wrong*/ ctx[3] ? '' : 'visibility') + " svelte-11k3j5w"));
+			add_location(span1, file$1, 52, 4, 1221);
 			attr_dev(div0, "id", "boardCounters");
-			attr_dev(div0, "class", "score score--absolute svelte-efik5t");
-			add_location(div0, file$1, 46, 3, 985);
+			attr_dev(div0, "class", "score score--absolute svelte-11k3j5w");
+			add_location(div0, file$1, 50, 3, 1114);
 			attr_dev(div1, "id", "progressBar");
 			attr_dev(div1, "class", "bar--progress");
-			add_location(div1, file$1, 52, 3, 1246);
+			add_location(div1, file$1, 56, 3, 1375);
 			attr_dev(div2, "id", "bar");
-			attr_dev(div2, "class", "bar bar--display bar--sticky svelte-efik5t");
+			attr_dev(div2, "class", "bar bar--display bar--sticky svelte-11k3j5w");
 			attr_dev(div2, "data-domain", "https://public.local");
-			add_location(div2, file$1, 45, 2, 895);
+			add_location(div2, file$1, 49, 2, 1024);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, div2, anchor);
@@ -1698,7 +1806,7 @@ function create_if_block(ctx) {
 			if (!current || dirty & /*correct*/ 4) set_data_dev(t0, /*correct*/ ctx[2]);
 			if (!current || dirty & /*wrong*/ 8) set_data_dev(t2, /*wrong*/ ctx[3]);
 
-			if (!current || dirty & /*wrong*/ 8 && span1_class_value !== (span1_class_value = "" + (null_to_empty(/*wrong*/ ctx[3] ? '' : 'visibility') + " svelte-efik5t"))) {
+			if (!current || dirty & /*wrong*/ 8 && span1_class_value !== (span1_class_value = "" + (null_to_empty(/*wrong*/ ctx[3] ? '' : 'visibility') + " svelte-11k3j5w"))) {
 				attr_dev(span1, "class", span1_class_value);
 			}
 
@@ -1737,7 +1845,7 @@ function create_if_block(ctx) {
 		block,
 		id: create_if_block.name,
 		type: "if",
-		source: "(45:1) {#if question}",
+		source: "(49:1) {#if question}",
 		ctx
 	});
 
@@ -1754,7 +1862,7 @@ function create_fragment$1(ctx) {
 			bb_helper = element("bb-helper");
 			if (if_block) if_block.c();
 			set_custom_element_data(bb_helper, "id", "bb");
-			add_location(bb_helper, file$1, 43, 0, 857);
+			add_location(bb_helper, file$1, 47, 0, 986);
 		},
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -1837,10 +1945,15 @@ function instance$1($$self, $$props, $$invalidate) {
 
 	const get_timer = function () {
 		let t = document.getElementById('boardTimer');
-		return t ? t.getAttribute('data-timer') : 0;
+		return t ? parseInt(t.getAttribute('data-timer')) : 0;
 	};
 
-	console.log('bar board loaded v 0.0.3');
+	const set_color = function (x) {
+		let r = document.querySelector(':root');
+		r.style.setProperty('--bb-color', x);
+	};
+
+	console.log('bb helper v0.1.0');
 	const writable_props = ['question', 'reset', 'set_timer', 'wrong_list', 'correct_list'];
 
 	Object.keys($$props).forEach(key => {
@@ -1872,7 +1985,8 @@ function instance$1($$self, $$props, $$invalidate) {
 		wrong,
 		set_wrong,
 		set_correct,
-		get_timer
+		get_timer,
+		set_color
 	});
 
 	$$self.$inject_state = $$props => {
@@ -1921,6 +2035,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		set_wrong,
 		set_correct,
 		get_timer,
+		set_color,
 		timer_start_timer_binding
 	];
 }
@@ -1937,7 +2052,8 @@ class Bar extends SvelteComponentDev {
 			correct_list: 6,
 			set_wrong: 7,
 			set_correct: 8,
-			get_timer: 9
+			get_timer: 9,
+			set_color: 10
 		});
 
 		dispatch_dev("SvelteRegisterComponent", {
@@ -2016,6 +2132,14 @@ class Bar extends SvelteComponentDev {
 	set get_timer(value) {
 		throw new Error("<Bar>: Cannot set read-only property 'get_timer'");
 	}
+
+	get set_color() {
+		return this.$$.ctx[10];
+	}
+
+	set set_color(value) {
+		throw new Error("<Bar>: Cannot set read-only property 'set_color'");
+	}
 }
 
 /* src/App.svelte generated by Svelte v3.46.2 */
@@ -2065,17 +2189,17 @@ function create_each_block(ctx) {
 			if (!src_url_equal(img.src, img_src_value = /*row*/ ctx[18].item.image.thumbnail.contentUrl)) attr_dev(img, "src", img_src_value);
 			attr_dev(img, "data-answer", img_data_answer_value = /*row*/ ctx[18].item.name);
 			attr_dev(img, "alt", img_alt_value = /*row*/ ctx[18].item.name);
-			add_location(img, file, 128, 4, 3560);
+			add_location(img, file, 128, 4, 3569);
 			attr_dev(a, "class", "wiki svelte-3sv4rp");
 			attr_dev(a, "rel", "noreferrer nofollow");
 			attr_dev(a, "target", "_blank");
 			attr_dev(a, "href", a_href_value = /*row*/ ctx[18].item.url);
-			add_location(a, file, 129, 4, 3713);
+			add_location(a, file, 129, 4, 3722);
 			attr_dev(figcaption, "data-search", "");
 			attr_dev(figcaption, "class", "desc svelte-3sv4rp");
-			add_location(figcaption, file, 130, 4, 3805);
+			add_location(figcaption, file, 130, 4, 3814);
 			attr_dev(figure, "class", "" + (null_to_empty(/*current*/ ctx[3] === 'correct' ? 'js--correct' : '') + " svelte-3sv4rp"));
-			add_location(figure, file, 127, 3, 3471);
+			add_location(figure, file, 127, 3, 3480);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, figure, anchor);
@@ -2165,7 +2289,7 @@ function create_fragment(ctx) {
 			t1 = space();
 			create_component(progress.$$.fragment);
 			attr_dev(div, "class", "content svelte-3sv4rp");
-			add_location(div, file, 125, 1, 3402);
+			add_location(div, file, 125, 1, 3411);
 		},
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -2325,7 +2449,11 @@ function instance($$self, $$props, $$invalidate) {
 	function stopQuestionsAndWin() {
 		console.log('Win');
 		clearInterval(interval);
-		prgs.store_progress({ collectionName: allTheFish.name });
+
+		prgs.store_progress({
+			collectionName: allTheFish.name,
+			exerciseTime: bb.get_timer()
+		});
 
 		//bb_helper.progress_request(data);
 		$$invalidate(2, bb.question = 'Excellent !', bb);
@@ -2500,7 +2628,7 @@ class App extends SvelteComponentDev {
 const app = new App({
 	target: document.getElementsByTagName('main')[0],
 	props: {
-		name: 'rutynka_svald_wiki_basic',
+		name: 'rutynka svelte quiz',
 	}
 });
 

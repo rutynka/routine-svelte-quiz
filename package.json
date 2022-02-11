@@ -1,14 +1,15 @@
 {
   "name": "rutynka-svelte-app",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "author": "ru7ynk4",
   "description": "Rutynka quiz app with helpers",
-  "svelte": "src/main.js",
-  "module": "dist/index.mjs",
+  "svelte": "src/index.js",
+  "module": "dist/bb.mjs",
   "main": "dist/index.js",
-  "unpkg": "dist/index.js",
+  "unpkg": "dist/bb.js",
+  "type": "module",
   "files": [
-    "public/build/index.js"
+    "App.svelte"
   ],
   "keywords": [
     "rutynka",
@@ -25,21 +26,45 @@
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "start": "sirv public"
+    "start": "sirv public",
+    "test": "jest"
   },
   "devDependencies": {
+    "@babel/core": "^7.8.0",
+    "@babel/preset-env": "^7.16.11",
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-node-resolve": "^11.0.0",
+    "@testing-library/jest-dom": "^5.16.2",
+    "@testing-library/svelte": "^3.0.3",
+    "babel-jest": "^27.5.0",
+    "jest": "^27.5.0",
+    "jest-transform-stub": "^2.0.0",
     "rollup": "^2.3.4",
     "rollup-plugin-css-only": "^3.1.0",
     "rollup-plugin-livereload": "^2.0.0",
     "rollup-plugin-svelte": "^7.0.0",
     "rollup-plugin-terser": "^7.0.0",
-    "svelte": "^3.0.0"
+    "svelte": "^3.0.0",
+    "svelte-jester": "^2.3.1"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.svelte$": "svelte-jester",
+      "^.+\\.js$": "babel-jest",
+      ".+\\.(css|styl|less|sass|scss|png|jpg|ttf|woff|woff2)$": "jest-transform-stub"
+    },
+    "moduleFileExtensions": [
+      "svelte",
+      "js"
+    ],
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": [
+      "@testing-library/jest-dom/extend-expect"
+    ]
   },
   "dependencies": {
-    "@rutynka/helper-bar-board": "rutynka/helper-bar-board",
-    "@rutynka/helper-progress": "^0.0.8",
+    "@rutynka/helper-bar-board": "^0.1.0",
+    "@rutynka/helper-progress": "^0.1.3",
     "eslint-plugin-svelte3": "^3.0.0",
     "sirv-cli": "^1.0.0"
   },
