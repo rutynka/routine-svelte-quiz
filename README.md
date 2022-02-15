@@ -1,8 +1,11 @@
-# Rutynka svelte quiz
+# Simple Svelte experimental quizz based on Wikipedia API data collected for rutynka.io
+
+![npm](https://img.shields.io/npm/v/rutynka-svelte-app?style=plastic)
+![NPM](https://img.shields.io/npm/l/rutynka-svelte-app?style=plastic)
 
 ![example](rutynka_quiz_anime.gif "Example")
 
-This is a svelte quiz type for [Rutynka](https://rutynka.io) apps.
+This is a simple quizz app made with Svelte on Wikipedia API data wrapped in JSON-ld. For more JSON-ld data pls search on [Rutynka](https://rutynka.io).
 
 ## Stand-alone live demo on [surge](https://surge.sh)
 
